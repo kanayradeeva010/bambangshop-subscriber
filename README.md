@@ -85,5 +85,28 @@ This is the place for you to write reflections:
 ### Mandatory (Subscriber) Reflections
 
 #### Reflection Subscriber-1
+# Question -1
+In the receiver app, the NOTIFICATION vector is a global static variable, multiple threads might try to access this vector at the exact same time, without a synchronization like RwLock, this would cause a data race which leads to memory corruption or program crash. The RwLock is intended to ensure memory safety. Why do we use RwLock instead of mutex is that RwLock allows multiple threads to read data simultaneously, in a typical notification app, read operations happen frequently. Also, a write operation requires an exclusive access, when a thread is writing, all other readers and writers are blocked till the write is finished. If we used a mutex, the system would be much slower because mutex only have one lock for all kinds of operations.  
+
+# Question -2
+Unlke java, rust prohibits direct mutation of static variables because it breaks the compiler's ability to ensure memory safety accross multiple threads. 
+
+A static variable allows any thread to modify them directly, it would bypass rust's strict ownership and borrowing rules. To mantain it's safety guarantees rust forces us to wrap mutable global state in synchronization primitives like Mutex or RwLock, and lazy_static allows us to intialize them at runtme since rust cannot evaluate complex expressions at compile time for static variables. This ensures the global data is always accessed through a controlled locking mechanism, making the code thread safe by design rather than relying on the programmer to avoid mistakes. 
 
 #### Reflection Subscriber-2
+# Question -1
+I explored src/lib.rs and learned that it's basically the brain of the app's configuration. Things that caught my eye is :
+- AppConfig & Figment 
+It lets us change things like the instance name or port via a .env without touching the code, it makes running multiple instances such as 8001, 8002, etc super easy
+
+- lazy_static! for REQWEST_CLIENT
+in rust we can't just make a global http client easily, using lazy_static ensures the client is a singleton, created once and reused, which is much better for performance than opening a new connection every time. 
+
+# Question -2
+the observer pattern makes the system feel like "lego." it enable us to spawn 10 more receivers on different ports, and the main app wouldn't care. it just adds their URLs to the list and sends notifications, no code changes needed.
+
+even if we had multiple Publishers, the system stays flexible, a receiver would just need to "register" itself to each publisher. Since they communicate via APIs, they don't depend on each other's internal logic.
+
+# Question -3
+The postman collection helped me for my workflow, instead of manually hittng endpoints or copy pasting JSON payloads everytime, i can just click and test the whole flow (example subscribe -> notify -> list) in seconds. For group projects, having a shared Postman collection means everyone tests with the same request format, reducing miscommunication about endpoint behavior. It makes collaboration way faster in a group work. 
+
